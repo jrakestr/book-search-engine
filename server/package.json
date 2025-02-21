@@ -5,7 +5,7 @@
   "main": "dist/server.js",
   "type": "module",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && cd ../client && npm install && npm run build && mkdir -p ../server/dist/client && cp -r dist/* ../server/dist/client/",
     "start": "node dist/server.js",
     "watch": "nodemon dist/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"

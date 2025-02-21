@@ -1,13 +1,10 @@
 import mongoose from 'mongoose';
 
-const options = {
+import type { ConnectOptions } from 'mongoose';
+
+const options: ConnectOptions = {
   ssl: true,
-  tls: true,
-  tlsCAFile: undefined,
-  tlsAllowInvalidHostnames: false,
-  tlsAllowInvalidCertificates: false,
   retryWrites: true,
-  w: 'majority',
   minPoolSize: 1,
   maxPoolSize: 10
 };

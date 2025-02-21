@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: book-search-engine
+    runtime: node
+    plan: free
+    buildCommand: npm run render-build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false # This will be set manually in Render dashboard
+      - key: JWT_SECRET
+        generateValue: true # This will auto-generate a secure key

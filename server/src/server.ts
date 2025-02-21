@@ -1,4 +1,5 @@
 import express from 'express';
+import type * as Express from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'url';
 import db from './config/connection.js';
@@ -20,7 +21,7 @@ app.use(express.json());
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, '../../client/dist')));
 
-  app.get('*', (req, res) => {
+  app.get('*', (_req, res) => {
     res.sendFile(path.join(__dirname, '../../client/dist/index.html'));
   });
 }
@@ -32,7 +33,7 @@ db.once('open', async () => {
   const server = new ApolloServer({
     typeDefs,
     resolvers,
-    context: ({ req }) => {
+    context: ({ req }: { req: Express.Request }) => {
       const token = req.headers.authorization || '';
       if (token) {
         try {

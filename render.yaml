@@ -4,8 +4,8 @@ services:
     runtime: node
     plan: free
     buildCommand: npm run render-build
-    startCommand: npm start
-    publishDirectory: server
+    startCommand: cd server && npm start
+    rootDirectory: server
     envVars:
       - key: NODE_ENV
         value: production

@@ -3,9 +3,8 @@ services:
     name: book-search-engine
     runtime: node
     plan: free
-    buildCommand: npm run render-build
-    startCommand: cd server && npm start
-    rootDirectory: server
+    buildCommand: cd server && npm install && npm run build && cd ../client && npm install && npm run build && cp -r dist ../server/dist/
+    startCommand: cd server && node dist/server.js
     envVars:
       - key: NODE_ENV
         value: production

@@ -32,7 +32,7 @@ db.once('open', async () => {
   const server = new ApolloServer({
     typeDefs,
     resolvers,
-    context: ({ req }: { req: import('express').Request }) => {
+    context: ({ req }) => {
       const token = req.headers.authorization || '';
       if (token) {
         try {

@@ -1,8 +1,8 @@
 import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { config } from 'dotenv';
 
-import dotenv from 'dotenv';
-dotenv.config();
+config();
 
 interface JwtPayload {
   _id: unknown;
@@ -21,7 +21,7 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
     }
     const secretKey = process.env.JWT_SECRET;
 
-    jwt.verify(token, secretKey, (err, user) => {
+    jwt.verify(token, secretKey, (err: jwt.VerifyErrors | null, user: any) => {
       if (err) {
         return res.sendStatus(403); // Forbidden
       }

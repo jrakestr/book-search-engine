@@ -49,5 +49,17 @@ db.once('open', async () => {
   });
   await server.start();
   server.applyMiddleware({ app });
-  app.listen(PORT, () => console.log(`Server ready at http://localhost:${PORT}${server.graphqlPath}`));
+  const httpServer = app.listen(PORT, () => {
+    console.log(`Server ready at http://localhost:${PORT}`);
+    console.log(`GraphQL ready at http://localhost:${PORT}${server.graphqlPath}`);
+  });
+
+  // Proper shutdown handling
+  process.on('SIGTERM', () => {
+    console.log('SIGTERM received. Shutting down gracefully...');
+    httpServer.close(() => {
+      console.log('Server closed');
+      process.exit(0);
+    });
+  });
 });

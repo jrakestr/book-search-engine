@@ -29,6 +29,14 @@ if (process.env.NODE_ENV === 'production') {
 // Apply routes before the catch-all route
 app.use(routes);
 
+// Handle process termination
+process.on('SIGINT', () => {
+  void db.close().then(() => {
+    console.log('MongoDB connection closed through app termination');
+    process.exit(0);
+  });
+});
+
 db.once('open', async () => {
   const server = new ApolloServer({
     typeDefs,

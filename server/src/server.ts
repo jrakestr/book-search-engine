@@ -1,19 +1,24 @@
 import express from 'express';
 import type * as Express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import db from './config/connection.js';
 import routes from './routes/index.js';
 import { ApolloServer } from 'apollo-server-express';
 import jwt from 'jsonwebtoken';
 import { typeDefs, resolvers } from './schema/index.js';
 
-// No need for path and fileURLToPath imports since we're not using them
-// for static file serving in development
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+
+// Serve static assets from the client build directory
+app.use(express.static(path.join(__dirname, '../client')));
 
 // Apply API routes - removing the /api prefix since it's already in the routes/index.ts file
 app.use(routes);
@@ -69,6 +74,11 @@ db.once('open', async () => {
   server.applyMiddleware({ 
     app,
     path: '/graphql'
+  });
+  
+  // Add catch-all route for client-side routing
+  app.get('*', (_req, res) => {
+    res.sendFile(path.join(__dirname, '../client/index.html'));
   });
   
   // Start Express server

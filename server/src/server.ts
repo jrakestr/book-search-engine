@@ -11,14 +11,26 @@ import { typeDefs, resolvers } from './schema/index.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// In production, client files are in dist/client
+// In development, they might be in ../client
+const clientPath = path.join(__dirname, '../client');
+const fallbackPath = path.join(__dirname, 'client');
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// Serve static assets from the client build directory
-app.use(express.static(path.join(__dirname, '../client')));
+// Try both possible client locations
+// First check if the client files are in ../client (development)
+app.use(express.static(clientPath));
+// Then check if they're in ./client (production build in dist folder)
+app.use(express.static(fallbackPath));
+
+console.log('Serving static files from possible locations:');
+console.log(' - ' + clientPath);
+console.log(' - ' + fallbackPath);
 
 // Apply API routes - removing the /api prefix since it's already in the routes/index.ts file
 app.use(routes);
@@ -78,7 +90,17 @@ db.once('open', async () => {
   
   // Add catch-all route for client-side routing
   app.get('*', (_req, res) => {
-    res.sendFile(path.join(__dirname, '../client/index.html'));
+    // Try to find index.html in both possible locations
+    const indexPath = path.join(clientPath, 'index.html');
+    const fallbackIndexPath = path.join(fallbackPath, 'index.html');
+    
+    // Check if the file exists in the first location
+    if (require('fs').existsSync(indexPath)) {
+      res.sendFile(indexPath);
+    } else {
+      // Otherwise use the fallback location
+      res.sendFile(fallbackIndexPath);
+    }
   });
   
   // Start Express server

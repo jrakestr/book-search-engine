@@ -14,6 +14,8 @@ import { saveBook, searchGoogleBooks } from '../utils/API';
 import { saveBookIds, getSavedBookIds } from '../utils/localStorage';
 import type { Book } from '../models/Book';
 import type { GoogleAPIBook } from '../models/GoogleAPIBook';
+import client from '../utils/client';
+import { SAVE_BOOK } from '../graphql/mutations';
 
 const SearchBooks = () => {
   // create state for holding returned google api data
@@ -75,16 +77,44 @@ const SearchBooks = () => {
     }
 
     try {
-      const response = await saveBook(bookToSave, token);
+      // Ensure all required fields are present
+      const bookDataToSave = {
+        ...bookToSave,
+        // Default values for required fields if they're missing
+        description: bookToSave.description || 'No description available',
+        authors: bookToSave.authors?.length ? bookToSave.authors : ['No author to display'],
+        title: bookToSave.title || 'Untitled',
+        image: bookToSave.image || '',
+        link: bookToSave.link || ''
+      };
 
-      if (!response.ok) {
-        throw new Error('something went wrong!');
+      console.log('Attempting to save book:', bookDataToSave);
+      
+      // Try using the Apollo client mutation instead of the fetch API
+      try {
+        const { data } = await client.mutate({
+          mutation: SAVE_BOOK,
+          variables: { bookData: bookDataToSave }
+        });
+        
+        console.log('Book saved successfully:', data);
+        // if book successfully saves to user's account, save book id to state
+        setSavedBookIds([...savedBookIds, bookToSave.bookId]);
+      } catch (graphqlError) {
+        console.error('GraphQL error saving book:', graphqlError);
+        
+        // Fall back to REST API if GraphQL fails
+        const response = await saveBook(bookDataToSave, token);
+
+        if (!response.ok) {
+          throw new Error('Something went wrong with the API call!');
+        }
+
+        // if book successfully saves to user's account, save book id to state
+        setSavedBookIds([...savedBookIds, bookToSave.bookId]);
       }
-
-      // if book successfully saves to user's account, save book id to state
-      setSavedBookIds([...savedBookIds, bookToSave.bookId]);
     } catch (err) {
-      console.error(err);
+      console.error('Error saving book:', err);
     }
   };
 

@@ -14,7 +14,7 @@ import { saveBook, searchGoogleBooks } from '../utils/API';
 import { saveBookIds, getSavedBookIds } from '../utils/localStorage';
 import type { Book } from '../models/Book';
 import type { GoogleAPIBook } from '../models/GoogleAPIBook';
-import client from '../utils/client';
+import client from '../apolloClient';
 import { SAVE_BOOK } from '../graphql/mutations';
 
 const SearchBooks = () => {

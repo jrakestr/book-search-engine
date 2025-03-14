@@ -16,10 +16,7 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
   if (authHeader) {
     const token = authHeader.split(' ')[1];
 
-    if (!process.env.JWT_SECRET) {
-      throw new Error('JWT_SECRET is not defined');
-    }
-    const secretKey = process.env.JWT_SECRET;
+    const secretKey = process.env.JWT_SECRET || 'defaultsecret';
 
     jwt.verify(token, secretKey, (err: jwt.VerifyErrors | null, user: any) => {
       if (err) {
@@ -36,10 +33,7 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
 
 export const signToken = (username: string, email: string, _id: unknown) => {
   const payload = { username, email, _id };
-  if (!process.env.JWT_SECRET) {
-    throw new Error('JWT_SECRET is not defined');
-  }
-  const secretKey = process.env.JWT_SECRET;
+  const secretKey = process.env.JWT_SECRET || 'defaultsecret';
 
   return jwt.sign(payload, secretKey, { expiresIn: '1h' });
 };

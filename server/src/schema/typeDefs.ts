@@ -16,6 +16,11 @@ const typeDefs = `#graphql
     savedBooks: [Book]!
   }
 
+  type Auth {
+    user: User
+    token: String!
+  }
+
   input BookInput {
     bookId: String!
     authors: [String]!
@@ -30,8 +35,8 @@ const typeDefs = `#graphql
   }
   
   type Mutation {
-    addUser(username: String!, email: String!, password: String!): User
-    login(email: String!, password: String!): User
+    addUser(username: String!, email: String!, password: String!): Auth
+    login(email: String!, password: String!): Auth
     saveBook(bookData: BookInput!): User
     removeBook(bookId: String!): User
   }

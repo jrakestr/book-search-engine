@@ -1,15 +1,13 @@
 import express from 'express';
 import type * as Express from 'express';
-import path from 'node:path';
-import { fileURLToPath } from 'url';
 import db from './config/connection.js';
 import routes from './routes/index.js';
 import { ApolloServer } from 'apollo-server-express';
 import jwt from 'jsonwebtoken';
 import { typeDefs, resolvers } from './schema/index.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// No need for path and fileURLToPath imports since we're not using them
+// for static file serving in development
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -17,16 +15,7 @@ const PORT = process.env.PORT || 3001;
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// if we're in production, serve client/dist as static assets
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, 'client')));
-
-  app.get('*', (_req, res) => {
-    res.sendFile(path.join(__dirname, 'client/index.html'));
-  });
-}
-
-// Apply routes before the catch-all route
+// Apply API routes - removing the /api prefix since it's already in the routes/index.ts file
 app.use(routes);
 
 // Handle process termination
@@ -38,25 +27,51 @@ process.on('SIGINT', () => {
 });
 
 db.once('open', async () => {
+  // Create Apollo Server
   const server = new ApolloServer({
     typeDefs,
     resolvers,
     context: ({ req }: { req: Express.Request }) => {
-      const token = req.headers.authorization || '';
-      if (token) {
+      const authHeader = req.headers.authorization;
+      console.log('Auth header received:', authHeader ? authHeader.substring(0, 20) + '...' : 'None');
+      
+      if (authHeader) {
         try {
-          const decoded = jwt.verify(token, process.env.JWT_SECRET || 'defaultsecret');
+          // Extract the token from the Bearer format
+          const token = authHeader.startsWith('Bearer ') 
+            ? authHeader.split(' ')[1] 
+            : authHeader;
+            
+          console.log('Extracted token for verification:', token.substring(0, 15) + '...');
+          
+          const secretKey = process.env.JWT_SECRET || 'defaultsecret';
+          console.log('Using secret key:', secretKey ? 'Secret provided' : 'Default secret');
+          
+          const decoded = jwt.verify(token, secretKey);
+          console.log('Token verified successfully, decoded payload:', decoded);
+          
           return { user: decoded };
         } catch (err) {
-          console.error('Invalid token', err);
+          console.error('JWT verification error:', err);
         }
       }
+      
+      console.log('No auth token or verification failed, returning empty context');
       return {};
     },
-    introspection: process.env.NODE_ENV !== 'production'
+    introspection: true,
   });
+  
+  // Start Apollo Server
   await server.start();
-  server.applyMiddleware({ app });
+  
+  // Apply middleware
+  server.applyMiddleware({ 
+    app,
+    path: '/graphql'
+  });
+  
+  // Start Express server
   const httpServer = app.listen(PORT, () => {
     console.log(`Server ready at http://localhost:${PORT}`);
     console.log(`GraphQL ready at http://localhost:${PORT}${server.graphqlPath}`);

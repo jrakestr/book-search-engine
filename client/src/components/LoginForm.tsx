@@ -2,8 +2,9 @@
 import { useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
 import { Form, Button, Alert } from 'react-bootstrap';
+import { useMutation } from '@apollo/client';
+import { LOGIN_USER } from '../graphql/mutations';
 
-import { loginUser } from '../utils/API';
 import Auth from '../utils/auth';
 import type { User } from '../models/User';
 
@@ -12,6 +13,9 @@ const LoginForm = ({}: { handleModalClose: () => void }) => {
   const [userFormData, setUserFormData] = useState<User>({ username: '', email: '', password: '', savedBooks: [] });
   const [validated] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
+
+  // Use the useMutation hook for GraphQL
+  const [loginUserMutation] = useMutation(LOGIN_USER);
 
   const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
@@ -29,14 +33,20 @@ const LoginForm = ({}: { handleModalClose: () => void }) => {
     }
 
     try {
-      const response = await loginUser(userFormData);
+      // Execute the loginUser mutation
+      const { data } = await loginUserMutation({
+        variables: { 
+          email: userFormData.email, 
+          password: userFormData.password 
+        },
+      });
 
-      if (!response.ok) {
-        throw new Error('something went wrong!');
+      // Check if we got user data back
+      if (!data || !data.login) {
+        throw new Error('Something went wrong!');
       }
 
-      const { token } = await response.json();
-      Auth.login(token);
+      Auth.login(data.login.token);
     } catch (err) {
       console.error(err);
       setShowAlert(true);
